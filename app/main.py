@@ -3,10 +3,13 @@ from fastapi import FastAPI
 
 from app.config.env import get_env
 from app.config.setup import init_app
+from app.router import homepage
 
 init_app()
 app = FastAPI(title=get_env()["project.name"], version=get_env()["project.version"])
 
+app.include_router(homepage.router_public)
+app.include_router(homepage.router_protected)
 
 @app.get("/ping")
 async def ping():
