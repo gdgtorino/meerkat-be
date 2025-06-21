@@ -1,6 +1,6 @@
 from typing import List
 
-from google.cloud.firestore_v1 import DocumentReference
+from google.cloud.firestore_v1 import DocumentReference, CollectionReference
 
 from app.database.firestore import get_firestore_client
 from app.dto.home_page import Menu, Header, Homepage
@@ -12,10 +12,11 @@ class HomePageService():
     def __init__(self):
         self.db = get_firestore_client()
 
-    def _doc_to_homepage(self, homepage_doc: DocumentReference) -> Homepage:
-        homepage = homepage_doc.get().to_dict() if homepage_doc.get().exists else None
-        if homepage is None:
-            return None
+    def _doc_to_homepage(self, homepage_doc: CollectionReference) -> Homepage:
+        homepage = {}
+        for hp_element in homepage_doc.get():
+            homepage.update({hp_element.id: hp_element.to_dict()})
+
 
         out = Homepage(menu=Menu.model_validate(homepage.get("menu") if homepage.get("menu") else None),
                        header=Header.model_validate(homepage.get("header") if homepage.get("header") else None),
@@ -27,8 +28,9 @@ class HomePageService():
             out.footer.extend(Item.model_validate(item) for item in homepage.get("footer")["items"])
         return out
 
+
     def get_homepage(self) -> Homepage:
-        homepage_doc = self.db.document('homepage')
+        homepage_doc = self.db.collection('homepage')
         return self._doc_to_homepage(homepage_doc)
 
     def put_menu(self, menu: Menu):
@@ -48,10 +50,10 @@ class HomePageService():
             items_menu.extend(
                 item.model_dump() for item in menu.items
             )
-        self.db.document('homepage').update(field_updates={"menu": {
+        self.db.collection("homepage").document("menu").set({
             "items": items_menu,
             "main_image": main_image.model_dump(),
-        }})
+        })
 
     def put_header(self, header: Header):
         main_image = None
@@ -75,12 +77,12 @@ class HomePageService():
 
         background_image = header.background_image
 
-        self.db.document('homepage').update(field_updates={"header": {
+        self.db.collection("homepage").document("header").set({
             "main_image": main_image.model_dump(),
             "background_image": background_image.model_dump(),
             "header_text": header_text.model_dump(),
             "call_to_action": call_to_action,
-        }})
+        })
 
     def put_section(self, items: List[Item], sections: str):
         items_to_save = []
@@ -90,6 +92,6 @@ class HomePageService():
                       subsection=None)  # FIXME implement subsection
                 .model_dump() for item in items
             )
-        self.db.document('homepage').update(field_updates={sections: {
+        self.db.collection("homepage").document("body").set({
             "items": items_to_save,
-        }})
+        })
