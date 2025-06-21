@@ -15,10 +15,6 @@ def init_firestore_client_service_account() :
 
 def get_firestore_client():
     '''
-    This method is a bad trick to use a single db in firebase where multiple planners are saved
+    This method return a firestore client.
     '''
-    collection_prefix = get_env()["firestore.prefix"]
-    if collection_prefix:
-        return firestore.client().collection(collection_prefix)
-    else:
-        return None #firestore.client()
+    return firestore.client()
