@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from app.config.env import get_env
 from app.config.setup import init_app
 from app.router import homepage, auth
+from app.router import talk
 
 init_app()
 app = FastAPI(title=get_env()["project.name"], version=get_env()["project.version"])
@@ -16,6 +17,10 @@ app.include_router(auth.router_public)
 app.include_router(homepage.router_public)
 app.include_router(homepage.router_protected)
 # </editor-fold>
+
+app.include_router(talk.router_public)
+app.include_router(talk.router_protected)
+
 
 @app.get("/ping")
 async def ping():
