@@ -3,13 +3,19 @@ from fastapi import FastAPI
 
 from app.config.env import get_env
 from app.config.setup import init_app
-from app.router import homepage
+from app.router import homepage, auth
 
 init_app()
 app = FastAPI(title=get_env()["project.name"], version=get_env()["project.version"])
 
+# <editor-fold desc="AUTHENTICATION ROUTES">
+app.include_router(auth.router_public)
+# </editor-fold>
+
+# <editor-fold desc="HOMEPAGE ROUTES">
 app.include_router(homepage.router_public)
 app.include_router(homepage.router_protected)
+# </editor-fold>
 
 @app.get("/ping")
 async def ping():
