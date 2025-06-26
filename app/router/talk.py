@@ -12,12 +12,12 @@ router_public = APIRouter(
 )
 
 
-@router_public.post("/{id_talk}", status_code=200,
+@router_public.get("/{id_talk}", status_code=200,
                     description="Get talk", )
-def get_talk(id_talks: str) -> TalkDto:
+def get_talk(id_talk: str) -> TalkDto:
     try:
         talk_service = TalkService()
-        return talk_service.get_talk(id_talk=id_talks)
+        return talk_service.get_talk(id_talk=id_talk)
     except HTTPException as e:
         raise HTTPException(status_code=e.status_code, detail=e.detail)
     except Exception as e:
@@ -25,7 +25,7 @@ def get_talk(id_talks: str) -> TalkDto:
         raise HTTPException(status_code=500, detail="Qualcosa è andato storto riprova più tardi")
 
 
-@router_public.post("", status_code=200,
+@router_public.get("", status_code=200,
                     description="Get all talks", )
 def get_talk() -> List[TalkDto]:
     try:
