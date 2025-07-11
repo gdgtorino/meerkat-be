@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  # Meerkat
+  api:
+    #Build Dockerfile in current directory
+    build: .
+    image: meerkat-be
+    ports:
+      - "11111:11111"
+    #restart: unless-stopped
