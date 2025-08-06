@@ -3,7 +3,7 @@ from fastapi import FastAPI
 
 from app.config.env import get_env
 from app.config.setup import init_app
-from app.router import homepage, auth
+from app.router import homepage, auth, sponsor
 from app.router import talk
 
 init_app()
@@ -20,6 +20,8 @@ app.include_router(homepage.router_protected)
 
 app.include_router(talk.router_public)
 app.include_router(talk.router_protected)
+app.include_router(sponsor.router_public)
+app.include_router(sponsor.router_protected)
 
 
 @app.get("/ping")
