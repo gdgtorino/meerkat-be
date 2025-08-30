@@ -75,6 +75,22 @@ jobs:
         pytest --cov=. --cov-report=xml --cov-report=html
         echo "✅ Tests passed"
     
+      # Step 8: Upload coverage reports
+      # This action uploads the code coverage reports to Codecov.io.
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v5
+      with:
+        # Specifies the coverage file to upload.
+        files: ./coverage.xml
+        # Adds a flag to identify this report as "unittests".
+        flags: unittests
+        # Assigns a name to the report.
+        name: codecov-umbrella
+        # Prevents the job from failing if Codecov has issues.
+        fail_ci_if_error: false
+        # The secret token for authentication with Codecov.
+        token: ${{ secrets.CODECOV_TOKEN }}
+    
     # Step 7: Code analysis
     # Runs various static code analysis tools.
     - name: Code Analysis
@@ -98,19 +114,20 @@ jobs:
         mypy . --ignore-missing-imports || echo "Type checking completed with warnings"
         
         echo "✅ Code analysis passed"
-    
-      # Step 8: Upload coverage reports
-      # This action uploads the code coverage reports to Codecov.io.
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v5
+
+      # Step 7: SonarCloud analysis
+      # This step performs a static analysis of the code.
+      # It requires the SONAR_TOKEN, SONAR_PROJECT_KEY, and SONAR_ORGANIZATION secrets.
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarqube-scan-action@v5.3
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # Token generated from SonarCloud
       with:
-        # Specifies the coverage file to upload.
-        files: ./coverage.xml
-        # Adds a flag to identify this report as "unittests".
-        flags: unittests
-        # Assigns a name to the report.
-        name: codecov-umbrella
-        # Prevents the job from failing if Codecov has issues.
-        fail_ci_if_error: false
-        # The secret token for authentication with Codecov.
-        token: ${{ secrets.CODECOV_TOKEN }}
+        # Add the following values as environment variables or secrets
+        # in your GitHub repository to configure SonarCloud.
+        args: >
+          -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+          -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+          -Dsonar.sources=src/
+          -Dsonar.tests=tests/
+          -Dsonar.python.coverage.reportPaths=coverage.xml
