@@ -1,0 +1,133 @@
+# .github/workflows/pr-ci.yml
+
+# Name of the workflow, which will be displayed in the GitHub Actions UI.
+name: Pull Request CI
+
+# Specifies the events that trigger the workflow.
+# This workflow runs whenever:
+# - A new pull request is opened (`opened`).
+# - An existing pull request is edited (`edited`).
+# - A pull request's code is synchronized (i.e., new commits are pushed) (`synchronize`).
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  ci:
+    # Specifies the environment on which this job will run.
+    # `ubuntu-latest` is a recent version of the Ubuntu operating system.
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Checkout code
+      # This action downloads the repository code to the virtual machine.
+    - name: Checkout code
+      id: checkout
+      uses: actions/checkout@v4
+    
+      # Step 2: Set up Python environment
+      # This action sets up a specific Python environment.
+    - name: Set up Python
+      id: setup_python
+      uses: actions/setup-python@v4
+      with:
+        # Specifies the Python version to use.
+        python-version: '3.12'
+    
+    # Step 3: Cache dependencies
+    # This step caches Python dependencies to speed up subsequent runs.
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        # The cache path
+        path: ~/.cache/pip
+        # The cache key, created using the operating system and a hash of the `requirements*.txt` files.
+        # If these files change, the cache is invalidated.
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        # Restore keys to find similar caches if the main key doesn't match.
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    # Step 4: Install dependencies
+      # Runs shell commands to install dependencies.
+    - name: Install dependencies
+      run: |
+        # Upgrades pip, the Python package manager.
+        python -m pip install --upgrade pip
+        # Installs dependencies
+        pip install -r requirements.txt
+        # Installs other packages required for tests and code analysis.
+        pip install pytest pytest-cov flake8 black isort mypy
+    
+    # Step 5: Run Python build and tests
+    # Runs shell commands to check the Python code syntax.
+    - name: Python Build
+      run: |
+        # Compiles Python files to check for syntax errors.
+        python -m py_compile $(find . -name "*.py" -not -path "./venv/*" -not -path "./.venv/*")
+        echo "✅ Python build successful"
+    
+    # Step 6: Run tests and code analysis
+    # Runs tests and generates coverage reports.
+    - name: Run Tests
+      run: |
+        # Executes `pytest`, generating an XML and an HTML coverage report.
+        pytest --cov=. --cov-report=xml --cov-report=html
+        echo "✅ Tests passed"
+    
+      # Step 8: Upload coverage reports
+      # This action uploads the code coverage reports to Codecov.io.
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v5
+      with:
+        # Specifies the coverage file to upload.
+        files: ./coverage.xml
+        # Adds a flag to identify this report as "unittests".
+        flags: unittests
+        # Assigns a name to the report.
+        name: codecov-umbrella
+        # Prevents the job from failing if Codecov has issues.
+        fail_ci_if_error: false
+        # The secret token for authentication with Codecov.
+        token: ${{ secrets.CODECOV_TOKEN }}
+    
+    # Step 7: Code analysis
+    # Runs various static code analysis tools.
+    - name: Code Analysis
+      run: |
+        # --- Code formatting check ---
+        # `black` checks if the code adheres to the formatting standard.
+        black --check --diff .
+        
+        # --- Import sorting check ---
+        # `isort` checks if imports are sorted correctly.
+        isort --check-only --diff .
+        
+        # --- Linting (style and common error checking) ---
+        # `flake8` looks for syntax errors (E9) and logical errors (F63, F7, F82).
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # `flake8` with parameters to check complexity and line length, without failing the job.
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        
+        # --- Type checking (if type hints are present) ---
+        # `mypy` performs static type analysis. The job does not fail even if there are warnings.
+        mypy . --ignore-missing-imports || echo "Type checking completed with warnings"
+        
+        echo "✅ Code analysis passed"
+
+      # Step 7: SonarCloud analysis
+      # This step performs a static analysis of the code.
+      # It requires the SONAR_TOKEN, SONAR_PROJECT_KEY, and SONAR_ORGANIZATION secrets.
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarqube-scan-action@v5.3
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # Token generated from SonarCloud
+      with:
+        # Add the following values as environment variables or secrets
+        # in your GitHub repository to configure SonarCloud.
+        args: >
+          -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+          -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+          -Dsonar.sources=src/
+          -Dsonar.tests=tests/
+          -Dsonar.python.coverage.reportPaths=coverage.xml
