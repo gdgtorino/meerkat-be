@@ -7,6 +7,11 @@ FROM python:3.12
 # All subsequent commands will be executed relative to this directory.
 WORKDIR /app
 
+# create a non-root user to run the application
+# This enhances security by avoiding running the app as the root user.
+# The --system flag creates a system user, and --no-create-home avoids creating a home directory.
+RUN adduser --system --no-create-home meerkat
+
 # Install system dependencies required for some Python packages (e.g., psycopg2, Pillow)
 # This step is optional but often necessary. Remove if you don't have such dependencies.
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -30,6 +35,10 @@ COPY ./app /app/app
 # If you have other files at the root of your project (e.g., .env files, config.yaml), copy them too:
 # COPY .env /app/.env
 # COPY config.yaml /app/config.yaml
+
+# Changing user to a non-root user for better security
+# It's a good practice to run applications as a non-root user in production environments.
+USER meerkat
 
 # Expose the port that FastAPI will run on
 # Uvicorn, the ASGI server for FastAPI, typically runs on port 8000 by default.
