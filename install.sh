@@ -4,9 +4,9 @@ set -e
 echo "🐾 Meerkat Backend Setup"
 
 # Check Python 3
-if ! command -v python3 &> /dev/null; then
-    echo "❌ Python 3 not found. Please install Python 3.9+"
-    exit 1
+if ! command -v python3 &>/dev/null; then
+  echo "❌ Python 3 not found. Please install Python 3.9+"
+  exit 1
 fi
 
 # Create virtual environment
@@ -27,8 +27,8 @@ poetry install --no-root
 
 # Copy config file if needed
 if [ ! -f "app/config/resource/env_dev_fest_alps_test.yaml" ]; then
-    echo "📝 Creating config file..."
-    cp app/config/resource/env.yaml app/config/resource/env_dev_fest_alps_test.yaml
+  echo "📝 Creating config file..."
+  cp app/config/resource/env.yaml app/config/resource/env_dev_fest_alps_test.yaml
 fi
 
 # Install pre-commit hooks
@@ -40,3 +40,4 @@ echo ""
 echo "Next steps:"
 echo "1. Add Firebase credentials to app/config/resource/firebase-adminsdk.json"
 echo "2. Run: source venv/bin/activate && python -m app.main"
+

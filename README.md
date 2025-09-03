@@ -11,11 +11,16 @@
 - Install dependencies: `poetry install --no-root`
 - Install pre-commit hooks: `pre-commit install`
 
-### Automated Setup
-
+### Automated Setup (Shell Script)
 ```bash
 chmod +x install.sh
 ./install.sh
+```
+
+### Automated Setup (Poetry Script)
+```bash
+pip install poetry
+poetry run setup
 ```
 
 ## Configuration
@@ -26,10 +31,13 @@ chmod +x install.sh
 ## Run
 
 ### Local
-
 ```bash
+# Option 1: Manual activation
 source venv/bin/activate
 python -m app.main
+
+# Option 2: Poetry script
+poetry run dev
 ```
 
 ### Docker Production
@@ -46,8 +54,23 @@ docker-compose -f docker-compose.yml up
 
 ## Development
 
-- Linting: `poetry run ruff check .`
-- Type checking: `poetry run pyright .`
-- Tests: `poetry run pytest`
+### Poetry Scripts (npm-style)
+```bash
+poetry run setup        # Initialize repo with venv, deps, pre-commit
+poetry run activate     # Show how to activate venv
+poetry run lint         # Run ruff linting
+poetry run format       # Run ruff formatting
+poetry run type-check   # Run pyright type checking
+poetry run test         # Run pytest
+poetry run dev          # Start development server with reload
+```
+
+### Manual Commands
+```bash
+poetry run ruff check .
+poetry run pyright .
+poetry run pytest
+```
+
 - Pre-commit runs automatically on commit
 
