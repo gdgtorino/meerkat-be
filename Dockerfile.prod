@@ -1,19 +1,40 @@
+#################################################
+# Build stage
+#################################################
+
+FROM python:3.13-slim-bookworm as builder
+
+WORKDIR /app
+
+# Install Poetry
+RUN pip install --no-cache-dir poetry
+
+# Copy poetry files
+COPY pyproject.toml poetry.lock ./
+
+# Configure poetry and build wheel
+RUN poetry config virtualenvs.create false && \
+  poetry build
+
+#################################################
+# Production stage
+#################################################
 FROM python:3.13-slim-bookworm
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir poetry
+# Copy wheel from builder stage
+COPY --from=builder /app/dist/*.whl ./
 
-COPY pyproject.toml poetry.lock ./
+# Install only the wheel (no dev dependencies)
+RUN pip install --no-cache-dir *.whl && \
+  rm *.whl
 
-RUN poetry config virtualenvs.create false && \
-  poetry install --no-root
+# Copy application code
+COPY app/ ./app/
 
-COPY . .
-
-RUN pre-commit install
-
+# Expose port
 EXPOSE 11111
 
-# Run with auto-reload for development
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "11111", "--reload"]
+# Run app
+CMD ["python", "-m", "app.main"]
