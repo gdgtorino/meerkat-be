@@ -2,6 +2,7 @@
 name = "meerkat-be"
 version = "0.1.0"
 description = "Meerkat Backend"
+packages = [{include = "app"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -21,11 +22,11 @@ pyright = "^1.1.404"
 [tool.poetry.scripts]
 setup = "scripts.setup:main"
 activate = "scripts.activate:main"
-lint = "ruff check ."
-format = "ruff format ."
-type-check = "pyright ."
-test = "pytest"
-dev = "uvicorn app.main:app --host 0.0.0.0 --port 11111 --reload"
+lint = "scripts.lint:main"
+format = "scripts.format:main" 
+type-check = "scripts.type_check:main"
+test = "scripts.test:main"
+dev = "scripts.dev:main"
 
 [build-system]
 requires = ["poetry-core"]
