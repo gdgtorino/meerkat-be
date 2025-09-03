@@ -26,29 +26,21 @@ class HomePageService:
         for hp_element in homepage_doc.get():
             homepage.update({hp_element.id: hp_element.to_dict()})
 
+        menu_data = homepage.get("menu")
+        header_data = homepage.get("header")
         out = Homepage(
-            menu=Menu.model_validate(
-                homepage.get("menu") if homepage.get("menu") else None
-            ),
-            header=Header.model_validate(
-                homepage.get("header") if homepage.get("header") else None
-            ),
+            menu=Menu.model_validate(menu_data) if menu_data else None,
+            header=Header.model_validate(header_data) if header_data else None,
             body=[],
             footer=[],
         )
-        if (
-            homepage.get("body") is not None
-            and homepage.get("body")["items"] is not None
-        ):
-            out.body.extend(
-                Item.model_validate(item) for item in homepage.get("body")["items"]
-            )
-        if (
-            homepage.get("footer") is not None
-            and homepage.get("footer")["items"] is not None
-        ):
+        body_data = homepage.get("body")
+        if body_data is not None and body_data.get("items") is not None:
+            out.body.extend(Item.model_validate(item) for item in body_data["items"])
+        footer_data = homepage.get("footer")
+        if footer_data is not None and footer_data.get("items") is not None:
             out.footer.extend(
-                Item.model_validate(item) for item in homepage.get("footer")["items"]
+                Item.model_validate(item) for item in footer_data["items"]
             )
         return out
 
@@ -64,7 +56,9 @@ class HomePageService:
                 src=menu.main_image.src,
                 title=menu.main_image.title,
                 caption=menu.main_image.caption,
-                btn=MBtn(**menu.main_image.btn.model_dump()),
+                btn=MBtn(**menu.main_image.btn.model_dump())
+                if menu.main_image.btn
+                else None,
             )
             # if menu.main_image.btn is not None:
             #     main_image.btn = menu.main_image.btn
@@ -74,7 +68,7 @@ class HomePageService:
         self.db.collection("homepage").document("menu").set(
             {
                 "items": items_menu,
-                "main_image": main_image.model_dump(),
+                "main_image": main_image.model_dump() if main_image else None,
             }
         )
 
@@ -100,9 +94,11 @@ class HomePageService:
 
         self.db.collection("homepage").document("header").set(
             {
-                "main_image": main_image.model_dump(),
-                "background_image": background_image.model_dump(),
-                "header_text": header_text.model_dump(),
+                "main_image": main_image.model_dump() if main_image else None,
+                "background_image": background_image.model_dump()
+                if background_image
+                else None,
+                "header_text": header_text.model_dump() if header_text else None,
                 "call_to_action": call_to_action,
             }
         )

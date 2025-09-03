@@ -2,11 +2,12 @@ import os
 
 import firebase_admin
 from firebase_admin import credentials, firestore
+from google.cloud.firestore import Client
 
 from app.config.env import get_env
 
 
-def init_firestore_client_service_account() -> firestore.Client | None:
+def init_firestore_client_service_account() -> Client | None:
     if firebase_admin._apps:
         return firestore.client()
     else:
@@ -21,7 +22,7 @@ def init_firestore_client_service_account() -> firestore.Client | None:
         firebase_admin.initialize_app(cred)
 
 
-def get_firestore_client() -> firestore.Client:
+def get_firestore_client() -> Client:
     """
     This method return a firestore client.
     """

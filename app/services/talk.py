@@ -1,4 +1,4 @@
-from google.cloud.firestore_v1 import DocumentReference
+from google.cloud.firestore_v1 import DocumentSnapshot
 
 from app.database.firestore import get_firestore_client
 from app.dto.talk import TalkDto
@@ -9,7 +9,7 @@ class TalkService:
     def __init__(self) -> None:
         self.db = get_firestore_client()
 
-    def _doc_to_talk(self, talk_doc: DocumentReference) -> TalkDto:
+    def _doc_to_talk(self, talk_doc: DocumentSnapshot) -> TalkDto:
         out = TalkDto(title="", speakers=[])
         if talk_doc.exists:
             out = TalkDto(
@@ -20,7 +20,7 @@ class TalkService:
                 description=talk_doc.get("description").__str__(),
                 level=talk_doc.get("level").__str__(),
                 language=talk_doc.get("language").__str__(),
-                speakers=talk_doc.get("speakers"),
+                speakers=talk_doc.get("speakers") or [],
             )
 
         return out

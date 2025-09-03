@@ -1,4 +1,4 @@
-from google.cloud.firestore_v1 import DocumentReference
+from google.cloud.firestore_v1 import DocumentSnapshot
 
 from app.database.firestore import get_firestore_client
 from app.dto.page_elements import Btn, Image
@@ -11,7 +11,7 @@ class SponsorService:
     def __init__(self) -> None:
         self.db = get_firestore_client()
 
-    def _doc_to_sponsor(self, sponsor_doc: DocumentReference) -> SponsorDto:
+    def _doc_to_sponsor(self, sponsor_doc: DocumentSnapshot) -> SponsorDto:
         out = SponsorDto(title="", level=SponsorLevel("Media_partner"))
         if sponsor_doc.exists:
             out = SponsorDto(

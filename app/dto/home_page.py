@@ -16,7 +16,7 @@ class Header(BaseModel):
 
 
 class Homepage(BaseModel):
-    menu: Menu
-    header: Header
+    menu: Menu | None
+    header: Header | None
     body: list[Item]
     footer: list[Item]

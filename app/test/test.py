@@ -175,9 +175,10 @@ class TestDtoHomePage(unittest.TestCase):
     def test_homepage_dto_missing_required_fields(self) -> None:
         from app.dto.home_page import Homepage
 
-        # Missing 'menu' and 'header' which are required
-        with self.assertRaises(ValidationError):
-            Homepage(body=[], footer=[])
+        # Test with None values
+        homepage = Homepage(menu=None, header=None, body=[], footer=[])
+        self.assertIsNone(homepage.menu)
+        self.assertIsNone(homepage.header)
 
 
 class TestDtoPageElements(unittest.TestCase):
@@ -196,7 +197,7 @@ class TestDtoPageElements(unittest.TestCase):
             src="test.jpg",
             title="Test Image",
             caption="A test image",
-            btn={"label": "View", "href": "/view"},
+            btn=Btn(label="View", href="/view"),
         )
         self.assertEqual(image.src, "test.jpg")
         self.assertIsInstance(image.btn, Btn)
@@ -212,12 +213,7 @@ class TestDtoPageElements(unittest.TestCase):
 
         bg = Background(
             is_image=True,
-            image={
-                "src": "bg.jpg",
-                "title": "BG",
-                "caption": "Background",
-                "color": "FFFFFF",
-            },
+            image=Image(src="bg.jpg", title="BG", caption="Background"),
             color="FF5600",
         )
         self.assertTrue(bg.is_image)
@@ -225,7 +221,8 @@ class TestDtoPageElements(unittest.TestCase):
         self.assertIsNotNone(bg.color)
 
     def test_item_dto_valid_data(self) -> None:
-        from app.dto.page_elements import Item, TypeBox
+        from app.dto.page_elements import Background, Item
+        from app.models.common.common import TypeBox
 
         item = Item(
             order=1,
@@ -233,8 +230,8 @@ class TestDtoPageElements(unittest.TestCase):
             subtitle="Item Subtitle",
             brief="Brief",
             content="Content",
-            type_box={"name": "Generic"},
-            background={"is_image": False, "color": "#FFFFFF", "image": None},
+            type_box=TypeBox(name="Generic"),
+            background=Background(is_image=False, color="#FFFFFF", image=None),
             image=None,
             subsection=[],
         )
@@ -254,7 +251,7 @@ class TestModelsCommon(unittest.TestCase):
         from app.models.common.common import TypeBox
 
         with self.assertRaises(ValidationError):
-            TypeBox(id=1)
+            TypeBox(name="Missing ID")
 
 
 class TestModelsPage(unittest.TestCase):
@@ -271,7 +268,7 @@ class TestModelsPage(unittest.TestCase):
             src="model.jpg",
             title="Model Image",
             caption="Model Caption",
-            btn={"label": "Link", "href": "#"},
+            btn=Btn(label="Link", href="#"),
         )
         self.assertIsInstance(image.btn, Btn)
 
@@ -287,7 +284,7 @@ class TestModelsPage(unittest.TestCase):
             content="Content",
             background=None,
             image=None,
-            type_box={"name": "Info"},
+            type_box=TypeBox(name="Info"),
             subsection=None,
         )
         self.assertIsInstance(item.type_box, TypeBox)
@@ -486,8 +483,8 @@ class TestHomepageRouter(unittest.TestCase):
         from app.dto.home_page import Header
         from app.dto.page_elements import Background
         from app.router.homepage import (
-            put_menu as put_header_route,
-        )  # Renamed in patch to put_menu, but logically it's put_header
+            put_header as put_header_route,
+        )
 
         header_data = Header(
             main_image=None,
@@ -502,7 +499,7 @@ class TestHomepageRouter(unittest.TestCase):
         )  # Call using the actual function name in the router
         self.assertIsNone(response)
         self.mock_homepage_service_instance.put_header.assert_called_once_with(
-            header=header_data
+            header_data
         )
 
 
