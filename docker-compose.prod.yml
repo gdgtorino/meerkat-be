@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: meerkat-be:prod
+    ports:
+      - "11111:11111"
+    environment:
+      - ENV=production
+    restart: unless-stopped

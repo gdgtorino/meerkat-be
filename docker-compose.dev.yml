@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  api-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: meerkat-be:dev
+    ports:
+      - "11111:11111"
+    volumes:
+      - .:/app
+      - /app/venv
+    environment:
+      - ENV=development
