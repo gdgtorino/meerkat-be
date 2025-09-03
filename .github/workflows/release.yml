@@ -1,0 +1,144 @@
+# .github/workflows/release.yml
+
+# Name of the workflow, which will be displayed in the GitHub Actions UI.
+name: Release
+
+# Controls when the workflow will run.
+on:
+  # This workflow is triggered on a 'push' event to the 'main' or 'master' branches.
+  push:
+    branches: [main, master]
+
+jobs:
+  release:
+    # Specifies the environment on which this job will run.
+    # `ubuntu-latest` is a recent version of the Ubuntu operating system.
+    runs-on: ubuntu-latest
+
+    # Defines the output variables for this job, which can be used by other jobs.
+    outputs:
+      new_tag: ${{steps.generate-tag.outputs.new_tag}}
+
+    steps:
+      # Step 1: Checkout code
+      # This action downloads the repository code to the virtual machine.
+    - id: checkout
+      name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        # `fetch-depth: 0` is required to fetch all history and tags,
+        # which is necessary for detecting the latest tag.
+        fetch-depth: 0
+    
+    # Step 2: Generate a new version tag
+      # This step determines the next version number based on the latest tag and commit messages.
+    - id: generate-tag
+      name: Get latest tag and determine version bump
+      run: |
+        # Get the latest Git tag from the branch history. If no tag is found, default to "v0.0.0".
+        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+        echo "Latest tag: $LATEST_TAG"
+        
+        # Extract the version numbers (major, minor, patch) from the latest tag.
+        VERSION=${LATEST_TAG#v}
+        IFS='.' read -r -a VERSION_PARTS <<< "$VERSION"
+        MAJOR=${VERSION_PARTS[0]:-0}
+        MINOR=${VERSION_PARTS[1]:-0}
+        PATCH=${VERSION_PARTS[2]:-0}
+        
+        echo "Current version: $MAJOR.$MINOR.$PATCH"
+        
+        # Get the message of the latest commit.
+        COMMIT_MSG=$(git log -1 --pretty=%B)
+        echo "Commit message: $COMMIT_MSG"
+        
+        # Determine the version bump (MAJOR, MINOR, or PATCH) based on the commit message prefix.
+        if [[ $COMMIT_MSG =~ ^MAJOR ]]; then
+          NEW_MAJOR=$((MAJOR + 1))
+          NEW_MINOR=0
+          NEW_PATCH=0
+          echo "MAJOR version bump detected"
+        elif [[ $COMMIT_MSG =~ ^RELEASE ]]; then
+          NEW_MAJOR=$MAJOR
+          NEW_MINOR=$((MINOR + 1))
+          NEW_PATCH=0
+          echo "MINOR version bump detected"
+        elif [[ $COMMIT_MSG =~ ^FIX ]]; then
+          NEW_MAJOR=$MAJOR
+          NEW_MINOR=$MINOR
+          NEW_PATCH=$((PATCH + 1))
+          echo "PATCH version bump detected"
+        else
+          # If no specific prefix is found, default to a PATCH version bump.
+          NEW_MAJOR=$MAJOR
+          NEW_MINOR=$MINOR
+          NEW_PATCH=$((PATCH + 1))
+          echo "Default PATCH version bump"
+        fi
+        
+        NEW_VERSION="$NEW_MAJOR.$NEW_MINOR.$NEW_PATCH"
+        NEW_TAG="v$NEW_VERSION"
+        
+        echo "New version: $NEW_VERSION"
+        echo "New tag: $NEW_TAG"
+        
+        # Set output variables for use in subsequent steps.
+        echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+        echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+        echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+    
+      # Step 3: Create and push the new tag
+      # This step creates a new Git tag based on the determined version and pushes it to the
+    - id: push-tag
+      name: Create and push tag
+      run: |
+        # Configure Git with the GitHub Actions bot's identity for commit operations.
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+        echo "Creating tag: ${{ steps.generate-tag.outputs.new_tag }}"
+        # Create an annotated Git tag.
+        git tag -a "${{ steps.generate-tag.outputs.new_tag }}" -m "Release ${{ steps.generate-tag.outputs.new_version }}"
+        # Push the new tag to the remote repository.
+        git push origin "${{ steps.generate-tag.outputs.new_tag }}"
+        
+        echo "✅ Tag ${{ steps.generate-tag.outputs.new_tag }} created and pushed"
+    
+      # Step 4: Create a GitHub release
+      # Uses the 'create-release' action to create a new release on GitHub.
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        # Uses the default GITHUB_TOKEN for authentication.
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        # Specifies the tag name for the release.
+        tag_name: ${{ steps.generate-tag.outputs.new_tag }}
+        # Specifies the name of the release.
+        release_name: Release ${{ steps.generate-tag.outputs.new_version }}
+        # Defines the body of the release, including a summary of changes since the last tag.
+        body: |
+          ## Changes in ${{ steps.generate-tag.outputs.new_version }}
+          
+          This release was automatically generated based on the commit message.
+          
+          **Previous version:** ${{ steps.generate-tag.outputs.latest_tag }}
+          **New version:** ${{ steps.generate-tag.outputs.new_tag }}
+          
+          ### Commit Messages Since Last Release
+          
+          $(git log ${{ steps.generate-tag.outputs.latest_tag }}..HEAD --pretty=format:"- %s" --no-merges)
+        # Sets the release to be published immediately.
+        draft: false
+        prerelease: false
+
+      # Step 5: Deploy the new version
+      # This step triggers another workflow to deploy the new version.
+    - name: Trigger Deployment Workflow
+      env:
+        # Uses the default GITHUB_TOKEN for authentication with the GitHub CLI.
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Uses the GitHub CLI ('gh') to trigger the 'Build and Deploy to Cloud Run (PROD)' workflow.
+        # It passes the newly created tag as an input parameter for the deployment.
+        gh workflow run "Build and Deploy to Cloud Run (PROD)" --ref main -f version=${{ steps.generate-tag.outputs.new_tag }}

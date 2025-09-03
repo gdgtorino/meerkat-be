@@ -1,0 +1,113 @@
+# .github/workflows/pr-ci.yml
+
+# Name of the workflow, which will be displayed in the GitHub Actions UI.
+name: Pull Request CI
+
+# Specifies the events that trigger the workflow.
+# This workflow runs whenever:
+# - A new pull request is opened (`opened`).
+# - An existing pull request is edited (`edited`).
+# - A pull request's code is synchronized (i.e., new commits are pushed) (`synchronize`).
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  ci:
+    # Specifies the environment on which this job will run.
+    # `ubuntu-latest` is a recent version of the Ubuntu operating system.
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Checkout code
+      # This action downloads the repository code to the virtual machine.
+    - name: Checkout code
+      id: checkout
+      uses: actions/checkout@v4
+    
+      # Step 2: Set up Python environment
+      # This action sets up a specific Python environment.
+    - name: Set up Python
+      id: setup_python
+      uses: actions/setup-python@v4
+      with:
+        # Specifies the Python version to use.
+        python-version: '3.13'
+    
+    # Step 3: Install Poetry
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: latest
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+    
+    # Step 4: Cache Poetry dependencies
+    - name: Cache Poetry dependencies
+      uses: actions/cache@v3
+      with:
+        path: .venv
+        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-poetry-
+    
+    # Step 5: Install dependencies
+    - name: Install dependencies
+      run: poetry install --no-root
+    
+    # Step 5: Run Python build and tests
+    # Runs shell commands to check the Python code syntax.
+    - name: Python Build
+      run: |
+        # Compiles Python files to check for syntax errors.
+        python -m py_compile $(find . -name "*.py" -not -path "./venv/*" -not -path "./.venv/*")
+        echo "✅ Python build successful"
+    
+    # Step 6: Run tests
+    - name: Run Tests
+      run: |
+        poetry run pytest --cov=. --cov-report=xml --cov-report=html
+        echo "✅ Tests passed"
+    
+      # Step 8: Upload coverage reports
+      # This action uploads the code coverage reports to Codecov.io.
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v5
+      with:
+        # Specifies the coverage file to upload.
+        files: ./coverage.xml
+        # Adds a flag to identify this report as "unittests".
+        flags: unittests
+        # Assigns a name to the report.
+        name: codecov-umbrella
+        # Prevents the job from failing if Codecov has issues.
+        fail_ci_if_error: false
+        # The secret token for authentication with Codecov.
+        token: ${{ secrets.CODECOV_TOKEN }}
+    
+    # Step 7: Code analysis
+    - name: Run Ruff linting
+      run: poetry run ruff check .
+    
+    - name: Run Ruff formatting check
+      run: poetry run ruff format --check .
+    
+    - name: Run Pyright type checking
+      run: poetry run pyright .
+
+      # Step 7: SonarCloud analysis
+      # This step performs a static analysis of the code.
+      # It requires the SONAR_TOKEN, SONAR_PROJECT_KEY, and SONAR_ORGANIZATION secrets.
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarqube-scan-action@v5.3
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # Token generated from SonarCloud
+      with:
+        # Add the following values as environment variables or secrets
+        # in your GitHub repository to configure SonarCloud.
+        args: >
+          -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+          -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+          -Dsonar.sources=src/
+          -Dsonar.tests=tests/
+          -Dsonar.python.coverage.reportPaths=coverage.xml
