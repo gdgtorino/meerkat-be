@@ -1,5 +1,3 @@
-from typing import List
-
 from pydantic import BaseModel, Field
 
 from app.models.common.common import TypeBox
@@ -10,8 +8,10 @@ class Btn(BaseModel):
     label: str
     href: str
     open_new_tab: bool = False
-    color_in_background: bool = Field(description="Boolean that define if button must have a background color or none",
-                                      default=True)
+    color_in_background: bool = Field(
+        description="Boolean that define if button must have a background color or none",
+        default=True,
+    )
 
 
 class Image(BaseModel):
@@ -19,7 +19,9 @@ class Image(BaseModel):
     src: str
     title: str
     caption: str
-    btn: Btn | None = Field(description="If image is a link this prop is valued", default=None)
+    btn: Btn | None = Field(
+        description="If image is a link this prop is valued", default=None
+    )
 
 
 class HeaderText(BaseModel):
@@ -57,4 +59,4 @@ class Item(BaseModel):
     background: Background | None
     image: Image | None
     type_box: TypeBox
-    subsection: List[Subsection] | None
+    subsection: list[Subsection] | None

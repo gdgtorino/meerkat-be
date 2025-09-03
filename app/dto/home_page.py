@@ -1,24 +1,22 @@
-from typing import List
-
 from pydantic import BaseModel
 
-from app.dto.page_elements import Image, Btn, HeaderText, Background, Item
+from app.dto.page_elements import Background, Btn, HeaderText, Image, Item
 
 
 class Menu(BaseModel):
     main_image: Image | None
-    items: List[Btn]
+    items: list[Btn]
 
 
 class Header(BaseModel):
     main_image: Image | None
     background_image: Background
     header_text: HeaderText | None
-    call_to_action: List[Btn]
+    call_to_action: list[Btn]
 
 
 class Homepage(BaseModel):
     menu: Menu
     header: Header
-    body: List[Item]
-    footer: List[Item]
+    body: list[Item]
+    footer: list[Item]

@@ -1,5 +1,3 @@
-from typing import List
-
 from pydantic import BaseModel
 
 
@@ -16,4 +14,4 @@ class Talk(BaseModel):
     description: str | None = None
     level: str | None = None
     language: str | None = None
-    speakers: List[str] | None  # FIXME : Add obj speaker
+    speakers: list[str] | None  # FIXME : Add obj speaker

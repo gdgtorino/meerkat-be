@@ -1,5 +1,4 @@
 import logging
-from typing import List
 
 from fastapi import APIRouter, HTTPException
 
@@ -12,30 +11,40 @@ router_public = APIRouter(
 )
 
 
-@router_public.get("/{id_talk}", status_code=200,
-                    description="Get talk", )
+@router_public.get(
+    "/{id_talk}",
+    status_code=200,
+    description="Get talk",
+)
 def get_talk(id_talk: str) -> TalkDto:
     try:
         talk_service = TalkService()
         return talk_service.get_talk(id_talk=id_talk)
     except HTTPException as e:
-        raise HTTPException(status_code=e.status_code, detail=e.detail)
+        raise HTTPException(status_code=e.status_code, detail=e.detail) from e
     except Exception as e:
         logging.error("Error in router_talk.get_talk() - ", e)
-        raise HTTPException(status_code=500, detail="Qualcosa è andato storto riprova più tardi")
+        raise HTTPException(
+            status_code=500, detail="Qualcosa è andato storto riprova più tardi"
+        ) from e
 
 
-@router_public.get("", status_code=200,
-                    description="Get all talks", )
-def get_talk() -> List[TalkDto]:
+@router_public.get(
+    "",
+    status_code=200,
+    description="Get all talks",
+)
+def get_all_talks() -> list[TalkDto]:
     try:
         talk_service = TalkService()
         return talk_service.get_all_talks()
     except HTTPException as e:
-        raise HTTPException(status_code=e.status_code, detail=e.detail)
+        raise HTTPException(status_code=e.status_code, detail=e.detail) from e
     except Exception as e:
         logging.error("Error in router_talk.get_talk() - ", e)
-        raise HTTPException(status_code=500, detail="Qualcosa è andato storto riprova più tardi")
+        raise HTTPException(
+            status_code=500, detail="Qualcosa è andato storto riprova più tardi"
+        ) from e
 
 
 router_protected = APIRouter(
@@ -45,14 +54,15 @@ router_protected = APIRouter(
 )
 
 
-@router_protected.put("", status_code=200,
-                      description="Create or update talk")
+@router_protected.put("", status_code=200, description="Create or update talk")
 def put_talk(talk: TalkDto) -> TalkDto:
     try:
         talk_service = TalkService()
         return talk_service.put_talk(talk=talk)
     except HTTPException as e:
-        raise HTTPException(status_code=e.status_code, detail=e.detail)
+        raise HTTPException(status_code=e.status_code, detail=e.detail) from e
     except Exception as e:
         logging.error("Error in router_talk.put_talk() - ", e)
-        raise HTTPException(status_code=500, detail="Qualcosa è andato storto riprova più tardi")
+        raise HTTPException(
+            status_code=500, detail="Qualcosa è andato storto riprova più tardi"
+        ) from e

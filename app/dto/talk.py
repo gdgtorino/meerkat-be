@@ -1,5 +1,3 @@
-from typing import List
-
 from pydantic import BaseModel
 
 
@@ -11,4 +9,4 @@ class TalkDto(BaseModel):
     description: str | None = None
     level: str | None = None
     language: str | None = None
-    speakers: List[str] | None
+    speakers: list[str] | None

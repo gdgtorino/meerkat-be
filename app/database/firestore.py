@@ -1,24 +1,28 @@
 import os
 
 import firebase_admin
-from firebase_admin import firestore, credentials
+from firebase_admin import credentials, firestore
 
 from app.config.env import get_env
 
 
-def init_firestore_client_service_account() :
+def init_firestore_client_service_account() -> firestore.Client | None:
     if firebase_admin._apps:
         return firestore.client()
     else:
         # Use a service account.
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        firestore_credential = os.path.join(current_dir, "../config/resource", get_env()["firestore.path_credential_file"])
+        firestore_credential = os.path.join(
+            current_dir,
+            "../config/resource",
+            get_env()["firestore.path_credential_file"],
+        )
         cred = credentials.Certificate(firestore_credential)
         firebase_admin.initialize_app(cred)
 
 
-def get_firestore_client():
-    '''
+def get_firestore_client() -> firestore.Client:
+    """
     This method return a firestore client.
-    '''
+    """
     return firestore.client()

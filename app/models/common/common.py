@@ -7,6 +7,7 @@ class TypeBox(BaseModel):
     id: int | None = None
     name: str
 
+
 class SponsorLevel(Enum):
     MAIN = "Main"
     PLATINUM = "Platinum"

@@ -3,8 +3,7 @@ from fastapi import FastAPI
 
 from app.config.env import get_env
 from app.config.setup import init_app
-from app.router import homepage, sponsor
-from app.router import talk
+from app.router import homepage, sponsor, talk
 
 init_app()
 app = FastAPI(title=get_env()["project.name"], version=get_env()["project.version"])
@@ -18,7 +17,7 @@ app.include_router(sponsor.router_protected)
 
 
 @app.get("/ping")
-async def ping():
+async def ping() -> dict[str, str]:
     return {"message": "Hello Meerkat!"}
 
 

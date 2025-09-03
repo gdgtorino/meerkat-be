@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from app.dto.page_elements import Image, Btn
+from app.dto.page_elements import Btn, Image
 from app.models.common.common import SponsorLevel
 
 
