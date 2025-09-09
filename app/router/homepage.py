@@ -13,7 +13,7 @@ router_public = APIRouter(
 )
 
 
-@router_public.post("", status_code=200,
+@router_public.get("", status_code=200,
                     description="Get homepage", )
 def get_homepage() -> Homepage:
     try:
