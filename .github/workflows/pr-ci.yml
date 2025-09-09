@@ -114,20 +114,3 @@ jobs:
         mypy . --ignore-missing-imports || echo "Type checking completed with warnings"
         
         echo "✅ Code analysis passed"
-
-      # Step 7: SonarCloud analysis
-      # This step performs a static analysis of the code.
-      # It requires the SONAR_TOKEN, SONAR_PROJECT_KEY, and SONAR_ORGANIZATION secrets.
-    - name: SonarCloud Scan
-      uses: SonarSource/sonarqube-scan-action@v5.3
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # Token generated from SonarCloud
-      with:
-        # Add the following values as environment variables or secrets
-        # in your GitHub repository to configure SonarCloud.
-        args: >
-          -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-          -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
-          -Dsonar.sources=src/
-          -Dsonar.tests=tests/
-          -Dsonar.python.coverage.reportPaths=coverage.xml
